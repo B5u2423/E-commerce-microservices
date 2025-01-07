@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/order_db
+    username: vubl
+    password: vubl
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  kafka:
+    producer:
+      bootstrap-servers: localhost:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: orderConfirmation:com.vubl.order.model.OrderConfirmation
+server:
+  port: '8085'
+application:
+  config:
+    customer-url: http://localhost:9000/api/v1/customers # 8083
+    product-url: http://localhost:9000/api/v1/products # 8084
+    payment-url: http://localhost:9000/api/v1/payments # 8086

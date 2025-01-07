@@ -1,0 +1,86 @@
+name: datk-ktmt
+services:
+  postgres:
+    container_name: ms_postgres_db
+    image: postgres
+    environment:
+      - POSTGRES_USER=vubl
+      - POSTGRES_PASSWORD=vubl
+      - PGDATA=/var/lib/postgresql/data
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
+  mongodb:
+    container_name: ms_mongo_db
+    image: mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=vubl
+      - MONGO_INITDB_ROOT_PASSWORD=vubl
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo:/data
+    networks:
+      - microservices-net
+    restart: unless-stopped
+
+  mail-dev:
+    container_name: ms_maildev
+    image: maildev/maildev
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: ms_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2182
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2182:2182"
+    networks:
+      - microservices-net
+
+  # Kafka Broker
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: ms_kafka
+    user: root
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2182
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://ms_kafka:9093,OUTSIDE://localhost:9092
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+    ports:
+      - "9093:9093"
+      - "9092:9092"
+    networks:
+      - microservices-net
+
+  zipkin:
+    container_name: ms_zipkin
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    driver: bridge
+
+volumes:
+  postgres:
+  mongo:
